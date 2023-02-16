@@ -1,0 +1,58 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+name: charmed-kafka # the name of your ROCK
+base: ubuntu:22.04 # the base environment for this ROCK
+version: '3.3.2' # just for humans. Semantic versioning is recommended
+summary: Charmed Kafka ROCK OCI # 79 char long summary
+description: |
+    Kafka is generally used for two broad classes of applications:
+    - Building real-time streaming data pipelines that reliably get data
+      between systems or applications
+    - Building real-time streaming applications that transform or react
+      to the streams of data
+
+license: Apache-2.0 # your application's SPDX license
+
+
+platforms: # The platforms this ROCK should be built on and run on
+    amd64:
+
+
+env:
+    - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+
+parts:
+    kafka:
+        plugin: nil
+        stage-packages:
+            - openjdk-17-jre-headless
+            - libpsl5
+            - curl
+        build-environment:
+            - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+        stage-snaps:
+            - charmed-kafka/latest/edge
+        override-build: |
+              ln -s /usr/lib/jvm/java-17-openjdk-amd64/bin/java \
+                $CRAFT_PART_INSTALL/usr/bin/java
+              ln -s /usr/lib/jvm/java-17-openjdk-amd64/bin/keytool \
+                $CRAFT_PART_INSTALL/usr/bin/keytool
+              mkdir -p $CRAFT_PART_INSTALL/var/lib/pebble/default/
+              mkdir -p $CRAFT_PART_INSTALL/logs/kafka/
+              mkdir -p $CRAFT_PART_INSTALL/data/kafka/
+        override-prime: |
+              craftctl default
+              rm -vf usr/lib/jvm/java-17-openjdk-amd64/lib/security/cacerts
+    non-root-user:
+        plugin: nil
+        after: [kafka]
+        overlay-script: |
+            # Create a user in the $CRAFT_OVERLAY chroot
+            groupadd -R $CRAFT_OVERLAY -g 1000 kafka
+            useradd -R $CRAFT_OVERLAY -M -r -g kafka -u 1000 kafka
+        override-prime: |
+            craftctl default
+            # Give permission ot the required folders
+            chown -R 1000:1000 opt/kafka
+            chown -R 1000:1000 logs/
+            chown -R 1000:1000 data/

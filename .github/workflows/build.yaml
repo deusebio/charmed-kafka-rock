@@ -1,0 +1,36 @@
+name: Build ROCK
+
+on:
+  workflow_call:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install tox
+        run: python3 -m pip install tox
+      - name: YAML Lint
+        run: tox -e lint
+
+  build:
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup LXD
+        uses: canonical/setup-lxd@main
+      - name: Install rockcraft
+        run: |
+          sudo snap install --classic --channel edge rockcraft
+      - name: Build ROCK
+        run: rockcraft pack --verbose
+
+      - name: Upload locally built ROCK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: charmed-kafka
+          path: "charmed-kafka_*.rock"
