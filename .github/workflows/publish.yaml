@@ -2,10 +2,7 @@ name: Publish ROCK
 on:
   push:
     branches:
-      - '*.*/stable'
-  workflow_dispatch:
-    branches:
-      - '*.*/stable'
+      - main
 
 jobs:
   build:
