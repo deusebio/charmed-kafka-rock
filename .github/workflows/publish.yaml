@@ -2,7 +2,7 @@ name: Publish ROCK
 on:
   push:
     branches:
-      - main
+      - 3-22.04
 
 jobs:
   build:
@@ -39,10 +39,20 @@ jobs:
           password: ${{ secrets.GHCR_TOKEN }}
       - name: Import and push to GHCR
         run: |
+          app_version=$(yq '.version' rockcraft.yaml)
           version=$(yq '(.version|split("-"))[0]' rockcraft.yaml)
           base=$(yq '(.base|split(":"))[1]' rockcraft.yaml)
-          tag=${version}-${base}_edge
+          risk=edge
+          tag=${version}-${base}_${risk}
+          channel=$(echo ${{ github.ref_name }} | cut -d "-" -f 1)
+
           sudo skopeo --insecure-policy copy \
             oci-archive:charmed-kafka_${tag}_amd64.rock \
             docker-daemon:ghcr.io/canonical/charmed-kafka:${tag}
+
+          docker tag \
+            ghcr.io/canonical/charmed-kafka:${tag} \
+            ghcr.io/canonical/charmed-kafka:${channel}-${risk}
+
           docker push ghcr.io/canonical/charmed-kafka:${tag}
+          docker push ghcr.io/canonical/charmed-kafka:${channel}-${risk}
