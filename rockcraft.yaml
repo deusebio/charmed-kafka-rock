@@ -17,8 +17,19 @@ license: Apache-2.0  # your application's SPDX license
 platforms:  # The platforms this ROCK should be built on and run on
   amd64:
 
-env:
-  - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+services:
+  kafka:
+    override: replace
+    command: /opt/kafka/bin/kafka-server-start.sh /etc/kafka/server.properties
+    startup: enabled
+    user: kafka
+    group: kafka
+    environment:
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      KAFKA_OPTS: "-javaagent:/opt/kafka/jmx_prometheus_javaagent.jar=\n
+        9101:/etc/kafka/jmx_prometheus.yaml\n
+        -Djava.security.auth.login.config=\n
+        /etc/kafka/kafka-jaas.cfg"
 
 parts:
   kafka:
@@ -37,6 +48,7 @@ parts:
       ln -s /usr/lib/jvm/java-17-openjdk-amd64/bin/keytool \
         $CRAFT_PART_INSTALL/usr/bin/keytool
 
+      # making core dirs
       mkdir -p $CRAFT_PART_INSTALL/var/lib/pebble/default/
       mkdir -p $CRAFT_PART_INSTALL/var/lib/kafka/
       mkdir -p $CRAFT_PART_INSTALL/var/log/kafka/
@@ -45,6 +57,10 @@ parts:
     override-prime: |
       craftctl default
       rm -vf usr/lib/jvm/java-17-openjdk-amd64/lib/security/cacerts
+    organize:
+      bin: opt/kafka/bin/
+      libs: opt/kafka/libs/
+      config: opt/kafka/config/
   non-root-user:
     plugin: nil
     after: [kafka]
@@ -56,7 +72,7 @@ parts:
       craftctl default
       # Give permission ot the required folders
       install -d -o 1000 -g 1000 -m 770 \
-      opt/kafka \
-      var/lib/kafka \
-      var/log/kafka \
-      etc/kafka
+        opt/kafka \
+        var/lib/kafka \
+        var/log/kafka \
+        etc/kafka
