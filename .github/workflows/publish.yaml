@@ -16,12 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Setup Docker
-        run: |
-          sudo snap install docker
-          sudo addgroup --system docker; sudo adduser $USER docker
-          newgrp docker
-          sudo snap disable docker; sudo snap enable docker
       - name: Install skopeo
         run: |
           sudo snap install --devmode --channel edge skopeo
@@ -39,20 +33,21 @@ jobs:
           password: ${{ secrets.GHCR_TOKEN }}
       - name: Import and push to GHCR
         run: |
-          app_version=$(yq '.version' rockcraft.yaml)
           version=$(yq '(.version|split("-"))[0]' rockcraft.yaml)
-          base=$(yq '(.base|split(":"))[1]' rockcraft.yaml)
+          base=$(yq '(.base|split("@"))[1]' rockcraft.yaml)
           risk=edge
           tag=${version}-${base}_${risk}
           channel=$(echo ${{ github.ref_name }} | cut -d "-" -f 1)
 
+          ROCK_FILE=${{ needs.build.outputs.rock }}
+
           sudo skopeo --insecure-policy copy \
-            oci-archive:charmed-kafka_${tag}_amd64.rock \
+            oci-archive:$ROCK_FILE \
             docker-daemon:ghcr.io/canonical/charmed-kafka:${tag}
 
           docker tag \
             ghcr.io/canonical/charmed-kafka:${tag} \
-            ghcr.io/canonical/charmed-kafka:${channel}-${risk}
+            ghcr.io/canonical/charmed-kafka:${channel}_${risk}
 
           docker push ghcr.io/canonical/charmed-kafka:${tag}
-          docker push ghcr.io/canonical/charmed-kafka:${channel}-${risk}
+          docker push ghcr.io/canonical/charmed-kafka:${channel}_${risk}
