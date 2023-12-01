@@ -1,5 +1,8 @@
 # Charmed Kafka ROCK
 
+[![Container Registry](https://img.shields.io/badge/Container%20Registry-published-blue)](https://github.com/canonical/charmed-kafka-rock/pkgs/container/charmed-kafka)
+[![Release](https://github.com/canonical/charmed-kafka-rock/actions/workflows/publish.yaml/badge.svg)](https://github.com/canonical/charmed-kafka-rock/actions/workflows/publish.yaml)
+
 This repository contains the packaging metadata for creating a Charmed Kafka ROCK. This ROCK image is based on the [Charmed Kafka Snap](https://github.com/canonical/charmed-kafka-snap)  
 
 For more information on ROCKs, visit the [rockcraft Github](https://github.com/canonical/rockcraft). 
