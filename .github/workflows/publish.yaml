@@ -2,7 +2,7 @@ name: Publish ROCK
 on:
   push:
     branches:
-      - 3-22.04/*
+      - 3-22.04
 
 jobs:
 
@@ -17,7 +17,8 @@ jobs:
         run: |
           BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
           echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
-          echo "risk=${BRANCH##*\/}" >> $GITHUB_OUTPUT
+          # echo "risk=${BRANCH##*\/}" >> $GITHUB_OUTPUT
+          echo "risk=edge" >> $GITHUB_OUTPUT
           echo "track=${BRANCH%*\/*}" >> $GITHUB_OUTPUT
         id: branch_metadata
 
